@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 
 def preprocessing(train_data,alone=True,title=True,deck=True):
     train_data = train_data.copy()
@@ -30,14 +32,25 @@ def encoder(data,col,method=1):
     if method == 1:
         encoder = OneHotEncoder(sparse_output=False)
         encoded = encoder.fit_transform(data[col])
-        data_encod = pd.DataFrame(encoded,columns=encoder.get_feature_names_out(col),index=data.index)
+        encoded = pd.DataFrame(encoded,columns=encoder.get_feature_names_out(col),index=data.index)
+        encoded = pd.concat([data,encoded],axis=1)
+        encoded = encoded.drop(columns=col)
     else:
-        data_encod = data[col].copy()
+        encoded = data.copy()
         encoder = LabelEncoder()
-        for colum in col:
-            data_encod[colum] = encoder.fit_transform(data[colum])
-    data = data.drop(columns=col)
-    data = pd.concat([data,data_encod],axis=1)
-    return data
-
+        for column in col:
+            encoded[column] = encoder.fit_transform(data[column])
+    return encoded
+   
+def normilise(data1,data2,method=1):
+    if method == 1:
+        scale = StandardScaler()
+        data1 = scale.fit_transform(data1)
+        data2 = scale.transform(data2)
+    else:
+        scale = MinMaxScaler()
+        data1 = scale.fit_transform(data1)
+        data2 = scale.transform(data2)
+    return data1,data2
+        
     
