@@ -20,9 +20,13 @@ def preprocessing(train_data,alone=True,title=True,deck=True):
     train_data = train_data.drop(columns=['Name'])
     if deck:
         train_data['Deck'] = train_data['Cabin'].str[0].fillna('No_info')
-        train_data = train_data[(train_data['Deck'] != 'T') & (train_data['Deck'] != 'G')]
+        train_data['Deck'] = train_data['Deck'].replace({
+    'T': 'No_info',
+    'G': 'No_info'
+    })
     train_data = train_data.drop(columns=['Cabin','Ticket'],errors='ignore')
-    train_data = train_data.dropna()
+    train_data['Fare'] = train_data['Fare'].fillna(train_data['Fare'].median())
+    train_data['Embarked'] = train_data['Embarked'].fillna(train_data['Embarked'].mode()[0])
     return train_data
 
 #<--Разделение данных на признаки и таргет-->#
@@ -51,16 +55,16 @@ def encoder(data,col,method=1):
 
 #<-- Стандартизация данных с помощью scaler-а-->#
 
-def normilise(data1,data2,method=1):
+def normalise_train_test(X_train, X_test, method=1):
     if method == 1:
-        scale = StandardScaler()
-        data1 = scale.fit_transform(data1)
-        data2 = scale.transform(data2)
+        scaler = StandardScaler()
     else:
-        scale = MinMaxScaler()
-        data1 = scale.fit_transform(data1)
-        data2 = scale.transform(data2)
-    return data1,data2
+        scaler = MinMaxScaler()
+
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    return X_train, X_test, scaler
         
     ###MODELS###
     
