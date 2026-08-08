@@ -144,7 +144,7 @@ def default_tree(train_x,test_x,train_y,test_y,mode=1,max_depth=5,min_samples_sp
     return model
 
 
-def ready_data():
+def ready_data(norm=True):
     train_data = pd.read_csv('data/train.csv')
     test_data = pd.read_csv('data/test.csv')
     test_data = preprocessing(train_data=test_data)
@@ -169,8 +169,9 @@ def ready_data():
 
     X,y = sech(train_data,'Survived') #делю датасет на таргет и признаки
     X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42,stratify=y)
-    X_train,X_test,scale = normalise_train_test(X_train,X_test) #Делаю стандартизацию (без утечки данных)
-    test_data = scale.transform(test_data)
+    if norm:
+        X_train,X_test,scale = normalise_train_test(X_train,X_test) #Делаю стандартизацию (без утечки данных)
+        test_data = scale.transform(test_data)
     
     return test_data,X_train,X_test,y_train,y_test,PassengerId
     
