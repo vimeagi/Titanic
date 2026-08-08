@@ -7,6 +7,7 @@ from sklearn.neighbors import KNeighborsClassifier,KNeighborsRegressor
 from sklearn.metrics import accuracy_score,mean_squared_error,mean_absolute_error
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier,DecisionTreeRegressor
+from sklearn.model_selection import train_test_split
 
 # <--Очистка данных от мусорных колонок и добавление новых признаков-->#
 
@@ -141,3 +142,41 @@ def default_tree(train_x,test_x,train_y,test_y,mode=1,max_depth=5,min_samples_sp
             print(f'{metric.__name__}_train:  {metric(train_y,pred_train):.4f}')
             print(f'{metric.__name__}_test:  {metric(test_y,pred_test):.4f}')
     return model
+
+
+def ready_data():
+    train_data = pd.read_csv('data/train.csv')
+    test_data = pd.read_csv('data/test.csv')
+    test_data = preprocessing(train_data=test_data)
+    woman_title = ['Dona','Dr','Ms']
+    man_title = ['Rev','Col']
+    test_data['Title'] = test_data['Title'].replace(woman_title, 'Miss')
+    test_data['Title'] = test_data['Title'].replace(man_title, 'Mr')
+    test_data = encoder(test_data,['Embarked','Title','Deck'],method=1) 
+    PassengerId = test_data['PassengerId']
+    test_data = test_data.drop(columns=['PassengerId'])
+    test_data = encoder(test_data,['Sex'],2) 
+    
+    
+    train_data = preprocessing(train_data=train_data) #преобразую данные как в разделе EDA и Feature Generation
+    train_data = train_data.drop(columns='PassengerId')
+    woman_title = ['Lady','Ms','Mme','Mlle']
+    man_title = ['Jonkheer','Countess','Capt','Sir','Don','Col','Major','Rev','Dr']
+    train_data['Title'] = train_data['Title'].replace(woman_title,'Miss')
+    train_data['Title'] = train_data['Title'].replace(man_title,'Mr')
+    train_data = encoder(train_data,['Embarked','Title','Deck'],method=1) #Произвожу OneHotEncoding по данным колонкам
+    train_data = encoder(train_data,['Sex'],2) #произвожу LabelEncoding по колонке Sex, тем самым заменяю её на 0 и 1
+
+    X,y = sech(train_data,'Survived') #делю датасет на таргет и признаки
+    X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42,stratify=y)
+    X_train,X_test,scale = normalise_train_test(X_train,X_test) #Делаю стандартизацию (без утечки данных)
+    test_data = scale.transform(test_data)
+    
+    return test_data,X_train,X_test,y_train,y_test,PassengerId
+    
+    
+    
+def submit(test_data,model,name,PassengerId):
+    pred = model.predict(test_data)
+    submit = pd.DataFrame({'PassengerId' : PassengerId, 'Survived' : pred})
+    submit.to_csv(f'submits/submit_{name}.csv',index=False)
